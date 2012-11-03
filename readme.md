@@ -10,10 +10,8 @@ This is a simple Bash script that updates __Afraid.org__ DDNS hosts with your ex
 	
 * `$CACHE_FILE` : The path to which your external IP should be cached.
 	- Defaults to *'/tmp/ddns.cache'*.
-
 * `$LOG_FILE` : The path to which log messages should be sent.
 	- Defaults to *'/tmp/ddns.log'*.
-
 * `$HASH_LIST` : An array of hashes to update.
 
 #### Hashes
