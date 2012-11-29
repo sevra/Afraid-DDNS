@@ -1,14 +1,34 @@
 #!/usr/bin/env bash
 
-. /etc/ddns/config
+CONFIG='/etc/afraid-ddns/conf'
+UPDATE_URL='https://freedns.afraid.org/dynamic/update.php?'
+CHECK_URL='http://checkip.dyndns.com'
 
-UPDATE_URL='http://freedns.afraid.org/dynamic/update.php?'
-WGET='wget --timeout=10 -qO -'
+CACHE_FILE='/etc/afraid-ddns/cache'
+LOG_FILE='/tmp/ddns.log'
 
-IP=`$WGET http://checkip.dyndns.com | grep -oE '([0-9]+\.){3}[0-9]+'`
+while getopts "c:" opt; do
+   case $opt in
+      c)
+         CONFIG=$OPTARG
+      ;;
+      ?)
+         echo 'invalid usage'
+         exit 1
+      ;;
+   esac
+done
 
-if [ ! ${LOG_FILE} ]; then
-   LOG_FILE=/tmp/ddns.log
+if [ -f $CONFIG ]; then
+   . $CONFIG
+else
+   echo 'Config file not found/specified.' 1>&2
+   exit 1
+fi
+
+if [ ! ${HASH_LIST} ]; then
+   log 'No hosts in $HASH_LIST, exiting...'
+   exit 1
 fi
 
 function log() {
@@ -16,19 +36,16 @@ function log() {
    logger -t ddns $1
 }
 
+if [ -n `which wget | grep -E '.* not found'` ]; then
+   WGET="`which wget` --timeout=10 -qO -"
+   IP=`$WGET $CHECK_URL | grep -oE '([0-9]+\.){3}[0-9]+'`
+else
+   log 'wget not found in $PATH'
+fi
+
 if [ -z $IP ]; then
    log 'No result from checkip.dyndns.com: aborting.'
    exit 1
-fi
-
-if [ ! ${CACHE_FILE} ]; then
-   CACHE_FILE=/tmp/ddns.cache
-   log "set default cache file: $CACHE_FILE"
-fi
-
-if [ ! ${HASH_LIST} ]; then
-   HASH_LIST=()
-   log 'set empty hash list'
 fi
 
 function update() {
@@ -47,7 +64,7 @@ function update_required() {
    fi
 }
 
-if [ ! -f $CACHE_FILE ]; then
+if [ ! -f $CACHE_FILE ] || [ -z `cat $CACHE_FILE` ]; then
    log 'Cache file nonexistent.'
    update
    exit 0
