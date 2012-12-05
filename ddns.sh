@@ -37,7 +37,7 @@ function log() {
 }
 
 if [ -n `which wget | grep -E '.* not found'` ]; then
-   WGET="`which wget` --timeout=10 -qO --no-check-certificate -"
+   WGET="`which wget` --timeout=10 --no-check-certificate -q -O -"
    IP=`$WGET $CHECK_URL | grep -oE '([0-9]+\.){3}[0-9]+'`
 else
    log 'wget not found in $PATH'
